@@ -5,9 +5,12 @@ let label = '';
 let prev_label = '';
 let modelURL = 'https://teachablemachine.withgoogle.com/models/IlM9gGwBy/'
 
+let partsys;
+
 // Fruit
 let active_fruit = [];
-let fruit_fall_speed = 1.1;
+const INITIAL_FRUIT_FALL_SPEED = 1.1;
+let fruit_fall_speed = INITIAL_FRUIT_FALL_SPEED;
 let score = 0;
 
 // Load the model
@@ -17,7 +20,7 @@ function preload() {
 
 function setup() {
   createCanvas(640, 520);
-  
+
   // Connect to the webcam
   video = createCapture(VIDEO);
   video.size(640, 520);
@@ -29,6 +32,8 @@ function setup() {
 
   // Spawn a random fruit to begin with.
   spawnRandomFruit();
+
+  partsys = new ParticleSystem(createVector(width/2, height/2));
 }
 
 function draw() {
@@ -49,12 +54,17 @@ function draw() {
     active_fruit[i].update(fruit_fall_speed);
     active_fruit[i].draw();
 
-    // Remove fruit from the array (deleting them) when they go off the bottom of the canvas.
+    // Remove fruit from the array (deleting them) when they go off the bottom of the canvas
+    // and resetting the fruit fall speed to start off easy again.
     if (active_fruit[i].y_pos > height)
     {
       active_fruit.splice(i, i+1);
+      fruit_fall_speed = INITIAL_FRUIT_FALL_SPEED;
+      score = 0;
     }
   }
+
+  partsys.run();
 
   // Draw the score on top of everything
   text(score, 20, 20);
@@ -93,14 +103,22 @@ function gotResults(error, results)
 function explodeFruit(label)
 {
   console.log("label is " + label);
+  // Search for fruit of the type that you just held up,
   for (let fruit of active_fruit)
   {
     if (fruit.type == label)
     {
+      // then spawn particles in the appropriate colour and position,
+      let explosion_col = active_fruit[0].getColour();
+      let explosion_pos = active_fruit[0].getPosition();
+      partsys.addParticles(explosion_pos, explosion_col, 50);
+
+      // then remove the fruit from the active_fruit array
+      // and increment score
       active_fruit.shift();
       score += 1;
 
-      // Increasing the fruit fall speed
+      // then increase the fruit fall speed
       fruit_fall_speed *= 1.2;
       console.log("new fall speed is " + fruit_fall_speed);
     }
@@ -128,4 +146,26 @@ function spawnRandomFruit()
   
   // Spawning another fruit (by calling self again) after a delay.
   const myTimeout = setTimeout(spawnRandomFruit, 2000);
+}
+
+function keyPressed()
+{
+  // Just for debugging.
+  // Press down arrow to explode the last fruit.
+  if (keyCode === DOWN_ARROW)
+  {
+    explodeFruit('Pepper');
+  }
+  else if (keyCode === UP_ARROW)
+  {
+    explodeFruit('Lime');
+  }
+  else if (keyCode === LEFT_ARROW)
+  {
+    explodeFruit('Carrot');
+  }
+  else if (keyCode === RIGHT_ARROW)
+  {
+    explodeFruit('Banana');
+  }
 }
