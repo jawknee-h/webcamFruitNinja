@@ -87,13 +87,13 @@ function gotResults(error, results)
     console.error(error);
     return;
   }
-  prev_label = label;
-  label = results[0].label;
-
-  // If a new fruit has just been detected, destroy it.
-  if (prev_label != label)
+  if (results[0].label != label)
   {
-    explodeFruit(label);
+    if (results[0].confidence > 0.96)
+    {
+      label = results[0].label;
+      explodeFruit(label);
+    }
   }
   
   // Continuing to classify the video again so that we can keep updating
@@ -104,18 +104,18 @@ function explodeFruit(label)
 {
   console.log("label is " + label);
   // Search for fruit of the type that you just held up,
-  for (let fruit of active_fruit)
+  for (let i = 0; i < active_fruit.length; i++)
   {
-    if (fruit.type == label)
+    if (active_fruit[i].type === label)
     {
       // then spawn particles in the appropriate colour and position,
-      let explosion_col = active_fruit[0].getColour();
-      let explosion_pos = active_fruit[0].getPosition();
+      let explosion_col = active_fruit[i].getColour();
+      let explosion_pos = active_fruit[i].getPosition();
       partsys.addParticles(explosion_pos, explosion_col, 50);
 
       // then remove the fruit from the active_fruit array
       // and increment score
-      active_fruit.shift();
+      active_fruit.splice(i, 1);
       score += 1;
 
       // then increase the fruit fall speed
@@ -123,6 +123,25 @@ function explodeFruit(label)
       console.log("new fall speed is " + fruit_fall_speed);
     }
   }
+  // for (let fruit of active_fruit)
+  // {
+  //   if (fruit.type == label)
+  //   {
+  //     // then spawn particles in the appropriate colour and position,
+  //     let explosion_col = active_fruit[0].getColour();
+  //     let explosion_pos = active_fruit[0].getPosition();
+  //     partsys.addParticles(explosion_pos, explosion_col, 50);
+
+  //     // then remove the fruit from the active_fruit array
+  //     // and increment score
+  //     active_fruit.shift();
+  //     score += 1;
+
+  //     // then increase the fruit fall speed
+  //     fruit_fall_speed *= 1.2;
+  //     console.log("new fall speed is " + fruit_fall_speed);
+  //   }
+  // }
 }
 
 function spawnRandomFruit()
